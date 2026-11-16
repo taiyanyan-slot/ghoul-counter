@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>東京喰種 ワンタップ設定判別カウンター</title>
+<style>
+  :root{ --bg:#111318; --card:#1c1f26; --line:#2c3038; --txt:#f2f3f5; --sub:#9aa3af; --acc:#e8b13a; --hi:#3ecf6e; --mid:#e8b13a; --lo:#e5534b; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; background:var(--bg); color:var(--txt); font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif; padding:10px 10px 40px; }
+  h1{ font-size:16px; margin:4px 2px 2px; }
+  .note{ font-size:11px; color:var(--sub); margin:0 2px 10px; line-height:1.5; }
+  .tabs{ display:flex; gap:8px; margin:10px 0 12px; }
+  .tabs button{ flex:1; background:#14161b; color:var(--sub); border:1px solid var(--line); border-radius:10px; padding:12px 6px; font-size:15px; font-weight:700; }
+  .tabs button.on{ background:var(--card); color:var(--txt); border-color:var(--acc); }
+  .verdict{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; margin-bottom:10px; }
+  .verdict .big{ font-size:22px; font-weight:700; line-height:1.3; }
+  .groups{ display:flex; gap:8px; margin-top:10px; }
+  .g{ flex:1; text-align:center; background:#14161b; border:1px solid var(--line); border-radius:10px; padding:8px 2px; }
+  .g .lab{ font-size:11px; color:var(--sub); }
+  .g .val{ font-size:20px; font-weight:700; }
+  .g.lo .val{ color:var(--lo); } .g.mid .val{ color:var(--mid); } .g.hi .val{ color:var(--hi); }
+  .bars{ margin-top:10px; }
+  .bar-row{ display:flex; align-items:center; gap:8px; margin:4px 0; font-size:13px; }
+  .bar-row .s{ width:34px; color:var(--sub); }
+  .bar-row .track{ flex:1; height:12px; background:#14161b; border-radius:6px; overflow:hidden; }
+  .bar-row .fill{ height:100%; background:var(--acc); border-radius:6px; transition:width .2s; }
+  .bar-row.top .fill{ background:var(--hi); }
+  .bar-row .pct{ width:52px; text-align:right; font-variant-numeric:tabular-nums; }
+  .sec{ font-size:13px; color:var(--sub); margin:14px 2px 6px; }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .btn{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 8px 10px; text-align:center; user-select:none; cursor:pointer; }
+  .btn:active{ background:#262a33; }
+  .btn .name{ font-size:15px; font-weight:600; }
+  .btn .cnt{ font-size:26px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums; }
+  .btn .unit{ font-size:11px; color:var(--sub); }
+  .btn.wide{ grid-column:span 2; }
+  .mini{ display:flex; gap:6px; justify-content:center; margin-top:6px; }
+  .mini button{ background:#14161b; color:var(--sub); border:1px solid var(--line); border-radius:8px; font-size:12px; padding:4px 12px; }
+  .gctrl{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; }
+  .gctrl .now{ font-size:30px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .gctrl .row{ display:flex; gap:6px; justify-content:center; margin-top:8px; flex-wrap:wrap; }
+  .gctrl button{ background:#14161b; color:var(--txt); border:1px solid var(--line); border-radius:8px; font-size:14px; padding:8px 12px; }
+  .gctrl button:active{ background:#262a33; }
+  .foot{ margin-top:18px; display:flex; gap:8px; }
+  .foot button{ flex:1; background:#14161b; color:var(--sub); border:1px solid var(--line); border-radius:10px; padding:10px; font-size:13px; }
+  .disc{ font-size:11px; color:var(--sub); line-height:1.6; margin-top:14px; }
+  /* 島チェック */
+  .gauge-wrap{ margin-top:12px; }
+  .gauge{ position:relative; height:16px; border-radius:8px; background:linear-gradient(90deg, var(--lo), #3a3f47 50%, var(--hi)); }
+  .gauge .marker{ position:absolute; top:-5px; width:4px; height:26px; background:#fff; border-radius:2px; transform:translateX(-50%); transition:left .2s; box-shadow:0 0 4px rgba(0,0,0,.6); }
+  .gauge-lab{ display:flex; justify-content:space-between; font-size:11px; color:var(--sub); margin-top:6px; }
+  .chips{ display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+  .chip{ background:#14161b; border:1px solid var(--line); border-radius:999px; padding:8px 12px; font-size:13px; user-select:none; cursor:pointer; }
+  .chip:active{ background:#262a33; }
+  .chip b{ font-variant-numeric:tabular-nums; }
+  .chip .minus{ color:var(--sub); font-size:11px; margin-left:4px; }
+  table.bands{ width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+  table.bands th, table.bands td{ border:1px solid var(--line); padding:6px 4px; text-align:center; font-variant-numeric:tabular-nums; }
+  table.bands th{ color:var(--sub); font-weight:600; background:#14161b; }
+  table.bands td.band{ text-align:left; }
+  .total-line{ font-size:14px; margin-top:8px; }
+  .total-line b{ font-size:18px; }
+</style>
+</head>
+<body>
+<h1>東京喰種 ワンタップ設定判別カウンター</h1>
+
+<div class="tabs">
+  <button id="tabCounter" class="on">自台カウンター</button>
+  <button id="tabIsland">島チェック（朝一）</button>
+</div>
+
+<!-- ============ 自台カウンター ============ -->
+<div id="modeCounter">
+<p class="note">打ちながら使う前提で作りました。起きた出来事をタップするだけ。通常Gはチェックポイント（AT3回／1,500G／3,000G）のときだけ、カウンターの数字に合わせてください。</p>
+
+<div class="verdict">
+  <div class="big" id="verdict">まだどちらにも寄っていません</div>
+  <div class="groups">
+    <div class="g lo"><div class="lab">低設定側 1+2</div><div class="val" id="gLo">–</div></div>
+    <div class="g mid"><div class="lab">中間 3+4</div><div class="val" id="gMid">–</div></div>
+    <div class="g hi"><div class="lab">高設定側 5+6</div><div class="val" id="gHi">–</div></div>
+  </div>
+  <div class="bars" id="bars"></div>
+</div>
+
+<div class="sec">通常時ゲーム数（チェックポイントで合わせる）</div>
+<div class="gctrl">
+  <div class="now"><span id="games">0</span><span style="font-size:14px;color:var(--sub)"> G</span></div>
+  <div class="row">
+    <button data-g="-500">−500</button><button data-g="-100">−100</button><button data-g="-10">−10</button>
+    <button data-g="10">+10</button><button data-g="100">+100</button><button data-g="500">+500</button>
+  </div>
+</div>
+
+<div class="sec">CZ（当選のたびにタップ）</div>
+<div class="grid">
+  <div class="btn" data-k="remi"><div class="name">レミニセンス</div><div class="cnt" id="c-remi">0</div><div class="mini"><button data-m="remi">−1</button></div></div>
+  <div class="btn" data-k="rize"><div class="name">大喰いの利世</div><div class="cnt" id="c-rize">0</div><div class="mini"><button data-m="rize">−1</button></div></div>
+</div>
+
+<div class="sec">ATまわり（当選のたびにタップ）</div>
+<div class="grid">
+  <div class="btn" data-k="at"><div class="name">AT回数</div><div class="cnt" id="c-at">0</div><div class="mini"><button data-m="at">−1</button></div></div>
+  <div class="btn" data-k="hiki"><div class="name">引き戻し</div><div class="cnt" id="c-hiki">0</div><div class="mini"><button data-m="hiki">−1</button></div></div>
+  <div class="btn" data-k="ep"><div class="name">エピソード</div><div class="cnt" id="c-ep">0</div><div class="mini"><button data-m="ep">−1</button></div></div>
+  <div class="btn" data-k="choku"><div class="name">リプレイ直撃</div><div class="cnt" id="c-choku">0</div><div class="mini"><button data-m="choku">−1</button></div></div>
+  <div class="btn wide" data-k="ura"><div class="name">裏AT</div><div class="cnt" id="c-ura">0</div><div class="mini"><button data-m="ura">−1</button></div></div>
+</div>
+
+<div class="sec">精神世界（保証Gが分かったときだけタップ）</div>
+<div class="grid">
+  <div class="btn" data-k="s13"><div class="name">13G</div><div class="cnt" id="c-s13">0</div><div class="mini"><button data-m="s13">−1</button></div></div>
+  <div class="btn" data-k="s23"><div class="name">23G</div><div class="cnt" id="c-s23">0</div><div class="mini"><button data-m="s23">−1</button></div></div>
+  <div class="btn wide" data-k="s33"><div class="name">33G</div><div class="cnt" id="c-s33">0</div><div class="mini"><button data-m="s33">−1</button></div></div>
+</div>
+
+<div class="foot">
+  <button id="undo">↩ 最後のタップを取り消す</button>
+  <button id="reset">全部リセット</button>
+</div>
+
+<p class="disc">計算は記事の推測シートと同じです（公表値のみ・ベイズ推測）。終了画面とEDカードは計算に入れていません。確率は「寄り」の目安で、確定ではありません。入力内容はこの端末の中にだけ保存されます。</p>
+</div>
+
+<!-- ============ 島チェック（朝一） ============ -->
+<div id="modeIsland" style="display:none">
+<p class="note">朝一、島（並び・列）の各台の初当たり（CZ）当選ゲーム数を見て、該当する帯をタップしてください。島全体の平均像が「低設定島／高設定島」のどちらに寄っているかを表示します。</p>
+
+<div class="verdict">
+  <div class="big" id="iVerdict">まだ台数が登録されていません</div>
+  <div class="total-line">登録台数：<b id="iTotal">0</b> 台</div>
+  <div class="gauge-wrap">
+    <div class="gauge"><div class="marker" id="iMarker" style="left:50%"></div></div>
+    <div class="gauge-lab"><span>低設定島</span><span>高設定島</span></div>
+  </div>
+</div>
+
+<div class="sec">当選ゲーム数の帯（1台ごとにタップ）</div>
+<div class="grid">
+  <div class="btn" data-b="0"><div class="name">〜90G当選</div><div class="cnt" id="b-0">0</div><div class="unit">台</div></div>
+  <div class="btn" data-b="1"><div class="name">91〜140G</div><div class="cnt" id="b-1">0</div><div class="unit">台</div></div>
+  <div class="btn" data-b="2"><div class="name">141〜190G</div><div class="cnt" id="b-2">0</div><div class="unit">台</div></div>
+  <div class="btn" data-b="3"><div class="name">190G抜け</div><div class="cnt" id="b-3">0</div><div class="unit">台</div></div>
+</div>
+
+<div class="sec">登録の修正（チップをタップで−1）</div>
+<div class="chips" id="iChips"></div>
+
+<div class="sec">帯ごとの内訳（この島 vs 期待値）</div>
+<table class="bands">
+  <tr><th>帯</th><th>この島</th><th>低設定群の期待</th><th>高設定群の期待</th></tr>
+  <tr><td class="band">〜90G当選</td><td id="t-0">–</td><td>約24%</td><td>約38%</td></tr>
+  <tr><td class="band">91〜140G</td><td id="t-1">–</td><td>約33%</td><td>約34%</td></tr>
+  <tr><td class="band">141〜190G</td><td id="t-2">–</td><td>約14%</td><td>約13%</td></tr>
+  <tr><td class="band">190G抜け</td><td id="t-3">–</td><td>約29%</td><td>約15%</td></tr>
+</table>
+
+<div class="foot">
+  <button id="iUndo">↩ 最後の登録を取り消す</button>
+  <button id="iReset">島チェックをリセット</button>
+</div>
+
+<p class="disc">この表示は、朝一の実戦集計（低設定群／高設定群の帯別当選率・概数）にもとづく、<b>低／高の2群で見た「島の平均像」の推定</b>です。ホールが全台系／並び・列といった置き方をしている島でのみ有効で、<b>個々の台の設定については何も言いません</b>。台数が少ないうちは大きく振れます。入力内容はこの端末の中にだけ保存されます。</p>
+</div>
+
+<script>
+"use strict";
+// === MATH START ===
+// 公表値（設定1..6）: 分母 1/x
+const DEN = {
+  remi:  [300.5, 295.1, 287.6, 276.7, 262.7, 251.2],
+  rize:  [2079.1, 1906.5, 1722.8, 1478.9, 1226.6, 1074.9],
+  ep:    [6620.2, 5879.7, 5114.5, 4062.5, 3166.7, 2639.5],
+  choku: [28460.6, 24453.5, 18093.0, 12019.5, 8615.4, 7036.8]
+};
+const HIKI = [0.0781, 0.0781, 0.0938, 0.1094, 0.1250, 0.1523];
+const URA  = [0.0110, 0.0132, 0.0163, 0.0219, 0.0285, 0.0332];
+// 精神世界 [13G,23G,33G]（設定3・4は合計100%に正規化した値）
+const SEI = [
+  [0.813,0.156,0.031],[0.813,0.156,0.031],[0.7493,0.1878,0.0629],
+  [0.7183,0.1878,0.0939],[0.672,0.219,0.109],[0.656,0.219,0.125]
+];
+const KEYS = ["remi","rize","ep","choku","at","hiki","ura","s13","s23","s33"];
+let S = { games:0 }; KEYS.forEach(k=>S[k]=0);
+
+// 島チェック：帯別当選率 [低設定群, 高設定群]（朝一実戦集計・概数）
+const BAND_LABELS = ["〜90G当選","91〜140G","141〜190G","190G抜け"];
+const BAND_RATES = [
+  [0.24, 0.38], // 〜90G当選
+  [0.33, 0.34], // 91〜140G
+  [0.14, 0.13], // 141〜190G
+  [0.29, 0.15]  // 190G抜け
+];
+let I = [0,0,0,0]; // 帯ごとの登録台数
+
+function lgamma(x){ // Lanczos approximation
+  const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<0.5) return Math.log(Math.PI)-Math.log(Math.sin(Math.PI*x))-lgamma(1-x);
+  x-=1; let a=c[0], t=x+7.5;
+  for(let i=1;i<c.length;i++) a+=c[i]/(x+i);
+  return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
+}
+function logPois(k, lam){ if(lam<=0) return k===0?0:-1e9; return k*Math.log(lam)-lam-lgamma(k+1); }
+function logBin(k, n, p){ if(n<=0) return 0; return lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1)+k*Math.log(p)+(n-k)*Math.log(1-p); }
+
+function posteriors(){
+  const ll=[0,0,0,0,0,0];
+  for(let s=0;s<6;s++){
+    ll[s]+= logPois(S.remi,  S.games/DEN.remi[s]);
+    ll[s]+= logPois(S.rize,  S.games/DEN.rize[s]);
+    ll[s]+= logPois(S.ep,    S.games/DEN.ep[s]);
+    ll[s]+= logPois(S.choku, S.games/DEN.choku[s]);
+    ll[s]+= logBin(S.hiki, S.at, HIKI[s]);
+    ll[s]+= logBin(S.ura,  S.at, URA[s]);
+    ll[s]+= S.s13*Math.log(SEI[s][0]) + S.s23*Math.log(SEI[s][1]) + S.s33*Math.log(SEI[s][2]);
+  }
+  const m=Math.max.apply(null,ll);
+  const ex=ll.map(v=>Math.exp(v-m));
+  const sum=ex.reduce((a,b)=>a+b,0);
+  return ex.map(v=>v/sum);
+}
+
+// 島チェック：対数尤度比（正＝高設定群寄り、負＝低設定群寄り）
+function islandLLR(counts){
+  let llr=0;
+  for(let b=0;b<4;b++){
+    llr += counts[b] * Math.log(BAND_RATES[b][1] / BAND_RATES[b][0]);
+  }
+  return llr;
+}
+// === MATH END ===
+
+/* ---------- 状態の読み込み ---------- */
+let history = [];
+let iHistory = [];
+try{ const saved = localStorage.getItem("ghoulCounter"); if(saved){ S = Object.assign(S, JSON.parse(saved)); } }catch(e){}
+try{ const savedI = localStorage.getItem("ghoulIsland"); if(savedI){ const p = JSON.parse(savedI); if(Array.isArray(p) && p.length===4) I = p.map(v=>Math.max(0, v|0)); } }catch(e){}
+
+/* ---------- 自台カウンター ---------- */
+function render(){
+  KEYS.forEach(k=>{ document.getElementById("c-"+k).textContent = S[k]; });
+  document.getElementById("games").textContent = S.games.toLocaleString();
+  const p = posteriors();
+  const lo=p[0]+p[1], mid=p[2]+p[3], hi=p[4]+p[5];
+  document.getElementById("gLo").textContent  = (lo*100).toFixed(1)+"%";
+  document.getElementById("gMid").textContent = (mid*100).toFixed(1)+"%";
+  document.getElementById("gHi").textContent  = (hi*100).toFixed(1)+"%";
+  let top=0; for(let i=1;i<6;i++) if(p[i]>p[top]) top=i;
+  const bars = document.getElementById("bars"); bars.innerHTML="";
+  p.forEach((v,i)=>{
+    const row=document.createElement("div"); row.className="bar-row"+(i===top?" top":"");
+    row.innerHTML = '<span class="s">設定'+(i+1)+'</span><span class="track"><span class="fill" style="width:'+(v*100).toFixed(1)+'%"></span></span><span class="pct">'+(v*100).toFixed(1)+'%</span>';
+    bars.appendChild(row);
+  });
+  let verdict;
+  if(S.games===0 && KEYS.every(k=>S[k]===0)) verdict="まだどちらにも寄っていません";
+  else if(hi>=0.8) verdict="高設定側が濃厚です（確定ではありません）";
+  else if(hi>=0.6) verdict="高設定側に寄っています";
+  else if(lo>=0.8) verdict="低設定側が濃厚です（確定ではありません）";
+  else if(lo>=0.6) verdict="低設定側に寄っています";
+  else verdict="まだどちらにも寄っていません（試行不足）";
+  document.getElementById("verdict").textContent = verdict;
+  try{ localStorage.setItem("ghoulCounter", JSON.stringify(S)); }catch(e){}
+}
+
+document.querySelectorAll("#modeCounter .btn").forEach(b=>{
+  b.addEventListener("click", ev=>{
+    if(ev.target.dataset && ev.target.dataset.m) return; // minus handled separately
+    const k=b.dataset.k; S[k]++; history.push(k); render();
+    if(navigator.vibrate) navigator.vibrate(10);
+  });
+});
+document.querySelectorAll("#modeCounter [data-m]").forEach(b=>{
+  b.addEventListener("click", ev=>{
+    ev.stopPropagation();
+    const k=b.dataset.m; if(S[k]>0){ S[k]--; render(); }
+  });
+});
+document.querySelectorAll("#modeCounter [data-g]").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    S.games=Math.max(0, S.games + parseInt(b.dataset.g,10)); render();
+  });
+});
+document.getElementById("undo").addEventListener("click", ()=>{
+  const k=history.pop(); if(k && S[k]>0){ S[k]--; render(); }
+});
+document.getElementById("reset").addEventListener("click", ()=>{
+  if(confirm("全部リセットしますか？")){ S={games:0}; KEYS.forEach(k=>S[k]=0); history=[]; render(); }
+});
+
+/* ---------- 島チェック（朝一） ---------- */
+function renderIsland(){
+  const total = I.reduce((a,b)=>a+b,0);
+  for(let b=0;b<4;b++){
+    document.getElementById("b-"+b).textContent = I[b];
+    document.getElementById("t-"+b).textContent = total>0 ? (I[b]+"台（"+(I[b]/total*100).toFixed(1)+"%）") : "–";
+  }
+  document.getElementById("iTotal").textContent = total;
+  const chips = document.getElementById("iChips"); chips.innerHTML="";
+  BAND_LABELS.forEach((lab,b)=>{
+    const c=document.createElement("span"); c.className="chip"; c.dataset.chip=b;
+    c.innerHTML = lab+" <b>"+I[b]+"</b><span class=\"minus\">タップで−1</span>";
+    c.addEventListener("click", ()=>{ if(I[b]>0){ I[b]--; renderIsland(); } });
+    chips.appendChild(c);
+  });
+  const llr = islandLLR(I);
+  const highShare = 1/(1+Math.exp(-llr)); // 事前確率50:50での高設定群のシェア
+  document.getElementById("iMarker").style.left = (highShare*100).toFixed(1)+"%";
+  let v;
+  if(total===0) v="まだ台数が登録されていません";
+  else if(llr>=0) v="高設定島寄り 約"+Math.exp(llr).toFixed(1)+"倍";
+  else v="低設定島寄り 約"+Math.exp(-llr).toFixed(1)+"倍";
+  document.getElementById("iVerdict").textContent = v;
+  try{ localStorage.setItem("ghoulIsland", JSON.stringify(I)); }catch(e){}
+}
+
+document.querySelectorAll("#modeIsland [data-b]").forEach(b=>{
+  b.addEventListener("click", ()=>{
+    const k=parseInt(b.dataset.b,10); I[k]++; iHistory.push(k); renderIsland();
+    if(navigator.vibrate) navigator.vibrate(10);
+  });
+});
+document.getElementById("iUndo").addEventListener("click", ()=>{
+  const k=iHistory.pop(); if(k!==undefined && I[k]>0){ I[k]--; renderIsland(); }
+});
+document.getElementById("iReset").addEventListener("click", ()=>{
+  if(confirm("島チェックを全部リセットしますか？")){ I=[0,0,0,0]; iHistory=[]; renderIsland(); }
+});
+
+/* ---------- タブ切り替え ---------- */
+function showMode(island){
+  document.getElementById("modeCounter").style.display = island ? "none" : "";
+  document.getElementById("modeIsland").style.display = island ? "" : "none";
+  document.getElementById("tabCounter").className = island ? "" : "on";
+  document.getElementById("tabIsland").className = island ? "on" : "";
+  try{ localStorage.setItem("ghoulTab", island ? "island" : "counter"); }catch(e){}
+}
+document.getElementById("tabCounter").addEventListener("click", ()=>showMode(false));
+document.getElementById("tabIsland").addEventListener("click", ()=>showMode(true));
+
+let startIsland=false;
+try{ startIsland = localStorage.getItem("ghoulTab")==="island"; }catch(e){}
+showMode(startIsland);
+render();
+renderIsland();
+</script>
+</body>
+</html>
