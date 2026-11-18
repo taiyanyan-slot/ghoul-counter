@@ -6,7 +6,7 @@
 <title>東京喰種 最速設定判別ツール</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="東京喰種 最速設定判別ツール">
-<meta property="og:description" content="打ちながらタップするだけで、設定の「寄り」が見える無料ツール。朝一の島チェック付き。計算は公表値のみ・検証済み。">
+<meta property="og:description" content="打ちながらタップするだけで、低設定か高設定かが見える無料ツール。朝一の島チェック付き。計算は公表値のみ・検証済み。">
 <meta property="og:url" content="https://taiyanyan-slot.github.io/ghoul-counter/">
 <meta property="og:image" content="https://taiyanyan-slot.github.io/ghoul-counter/ogp.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -127,7 +127,7 @@
   <button id="reset">全部リセット</button>
 </div>
 
-<p class="disc">計算は記事の推測シートと同じです（公表値のみ・ベイズ推測）。終了画面とEDカードは計算に入れていません。確率は「寄り」の目安で、確定ではありません。入力内容はこの端末の中にだけ保存されます。</p>
+<p class="disc">計算は記事の推測シートと同じです（公表値のみ・ベイズ推測）。終了画面とEDカードは計算に入れていません。表示される確率は目安で、確定ではありません。入力内容はこの端末の中にだけ保存されます。</p>
 </div>
 
 <!-- ============ 島チェック（朝一） ============ -->
@@ -232,7 +232,7 @@ function posteriors(){
   return ex.map(v=>v/sum);
 }
 
-// 島チェック：対数尤度比（正＝高設定群寄り、負＝低設定群寄り）
+// 島チェック：対数尤度比（正＝高設定群、負＝低設定群）
 function islandLLR(counts){
   let llr=0;
   for(let b=0;b<4;b++){
@@ -320,8 +320,8 @@ function renderIsland(){
   document.getElementById("iMarker").style.left = (highShare*100).toFixed(1)+"%";
   let v;
   if(total===0) v="まだ台数が登録されていません";
-  else if(llr>=0) v="高設定島寄り 約"+Math.exp(llr).toFixed(1)+"倍";
-  else v="低設定島寄り 約"+Math.exp(-llr).toFixed(1)+"倍";
+  else if(llr>=0) v="高設定島 約"+Math.exp(llr).toFixed(1)+"倍";
+  else v="低設定島 約"+Math.exp(-llr).toFixed(1)+"倍";
   document.getElementById("iVerdict").textContent = v;
   try{ localStorage.setItem("ghoulIsland", JSON.stringify(I)); }catch(e){}
 }
