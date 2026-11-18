@@ -82,7 +82,7 @@
 <p class="note">打ちながら使う前提で作りました。起きた出来事をタップするだけ。通常Gはチェックポイント（AT3回／1,500G／3,000G）のときだけ、カウンターの数字に合わせてください。</p>
 
 <div class="verdict">
-  <div class="big" id="verdict">まだどちらにも寄っていません</div>
+  <div class="big" id="verdict">まだ判定できません</div>
   <div class="groups">
     <div class="g lo"><div class="lab">低設定側 1+2</div><div class="val" id="gLo">–</div></div>
     <div class="g mid"><div class="lab">中間 3+4</div><div class="val" id="gMid">–</div></div>
@@ -132,7 +132,7 @@
 
 <!-- ============ 島チェック（朝一） ============ -->
 <div id="modeIsland" style="display:none">
-<p class="note">朝一、島（並び・列）の各台の初当たり（CZ）当選ゲーム数を見て、該当する帯をタップしてください。島全体の平均像が「低設定島／高設定島」のどちらに寄っているかを表示します。</p>
+<p class="note">朝一、島（並び・列）の各台の初当たり（CZ）当選ゲーム数を見て、該当する帯をタップしてください。島全体の平均像が「低設定島／高設定島」のどちらかを表示します。</p>
 
 <div class="verdict">
   <div class="big" id="iVerdict">まだ台数が登録されていません</div>
@@ -265,12 +265,12 @@ function render(){
     bars.appendChild(row);
   });
   let verdict;
-  if(S.games===0 && KEYS.every(k=>S[k]===0)) verdict="まだどちらにも寄っていません";
+  if(S.games===0 && KEYS.every(k=>S[k]===0)) verdict="まだ判定できません";
   else if(hi>=0.8) verdict="高設定側が濃厚です（確定ではありません）";
-  else if(hi>=0.6) verdict="高設定側に寄っています";
+  else if(hi>=0.6) verdict="高設定側の可能性が高いです";
   else if(lo>=0.8) verdict="低設定側が濃厚です（確定ではありません）";
-  else if(lo>=0.6) verdict="低設定側に寄っています";
-  else verdict="まだどちらにも寄っていません（試行不足）";
+  else if(lo>=0.6) verdict="低設定側の可能性が高いです";
+  else verdict="まだ判定できません（試行不足）";
   document.getElementById("verdict").textContent = verdict;
   try{ localStorage.setItem("ghoulCounter", JSON.stringify(S)); }catch(e){}
 }
